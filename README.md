@@ -1,3 +1,4 @@
+<img width="955" height="1009" alt="Screenshot 2026-11-26 080830" src="https://github.com/user-attachments/assets/5bb2b419-318d-41c9-93cd-bde338686ab6" />
 ```markdown
 # Project 01: Multi-Tier Web App with Docker Compose & Nginx Reverse Proxy
 
