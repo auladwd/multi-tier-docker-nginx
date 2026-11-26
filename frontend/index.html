@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DevOps Multi-Tier Task Tracker</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: #0f172a; color: #e2e8f0; min-height: 100vh; display: flex; justify-content: center; padding: 2rem 1rem; }
+    .container { width: 100%; max-width: 680px; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; padding: 1.5rem; margin-bottom: 1.25rem; }
+    h1 { font-size: 1.5rem; color: #38bdf8; margin-bottom: 0.4rem; }
+    .subtitle { font-size: 0.9rem; color: #94a3b8; margin-bottom: 1rem; }
+    .status-row { display: flex; gap: 0.75rem; flex-wrap: wrap; font-size: 0.85rem; }
+    .badge { padding: 0.3rem 0.65rem; border-radius: 999px; background: #0f172a; border: 1px solid #334155; }
+    .badge.ok { border-color: #22c55e; color: #4ade80; }
+    .badge.err { border-color: #ef4444; color: #f87171; }
+    form { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+    input { flex: 1; padding: 0.65rem 0.85rem; border-radius: 8px; border: 1px solid #475569; background: #0f172a; color: #f8fafc; }
+    button { padding: 0.65rem 1.1rem; border: none; border-radius: 8px; background: #0284c7; color: #fff; font-weight: 600; cursor: pointer; }
+    button:hover { background: #0369a1; }
+    ul { list-style: none; display: flex; flex-direction: column; gap: 0.6rem; }
+    li { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; background: #0f172a; border: 1px solid #334155; border-radius: 8px; }
+    .del-btn { background: #dc2626; padding: 0.35rem 0.65rem; font-size: 0.8rem; }
+    .del-btn:hover { background: #b91c1c; }
+    .meta { font-size: 0.8rem; color: #94a3b8; margin-bottom: 0.75rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="card">
+      <h1>DevOps Multi-Tier Task Tracker</h1>
+      <p class="subtitle">Nginx Reverse Proxy + Frontend + Node.js API + PostgreSQL + Redis</p>
+      <div class="status-row" id="health">
+        <span class="badge">Checking services...</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <form id="taskForm">
+        <input type="text" id="taskInput" placeholder="Add a DevOps task..." required />
+        <button type="submit">Add Task</button>
+      </form>
+      <div class="meta" id="sourceInfo">Data source: loading...</div>
+      <ul id="taskList"></ul>
+    </div>
+  </div>
+
+  <script>
+    async function loadHealth() {
+      const el = document.getElementById('health');
+      try {
+        const res = await fetch('/api/health');
+        const data = await res.json();
+        el.innerHTML = `
+          <span class="badge ok">API: ${data.status}</span>
+          <span class="badge ok">PostgreSQL: ${data.database}</span>
+          <span class="badge ok">Redis: ${data.redis}</span>
+        `;
+      } catch {
+        el.innerHTML = `<span class="badge err">Backend unreachable</span>`;
+      }
+    }
+
+    async function loadTasks() {
+      const list = document.getElementById('taskList');
+      const sourceInfo = document.getElementById('sourceInfo');
+      const res = await fetch('/api/tasks');
+      const data = await res.json();
+      sourceInfo.textContent = `Data source: ${data.source} (refreshed at ${new Date().toLocaleTimeString()})`;
+      list.innerHTML = '';
+      data.tasks.forEach((task) => {
+        const li = document.createElement('li');
+        li.innerHTML = `
+          <span>${task.title}</span>
+          <button class="del-btn" onclick="deleteTask(${task.id})">Delete</button>
+        `;
+        list.appendChild(li);
+      });
+    }
+
+    document.getElementById('taskForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const input = document.getElementById('taskInput');
+      if (!input.value.trim()) return;
+      await fetch('/api/tasks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ title: input.value.trim() }),
+      });
+      input.value = '';
+      await loadTasks();
+    });
+
+    async function deleteTask(id) {
+      await fetch(`/api/tasks/${id}`, { method: 'DELETE' });
+      await loadTasks();
+    }
+
+    loadHealth();
+    loadTasks();
+  </script>
+</body>
+</html>

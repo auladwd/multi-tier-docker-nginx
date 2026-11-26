@@ -1,0 +1,14 @@
+{
+  "name": "devops-task-api",
+  "version": "1.0.0",
+  "description": "Backend API for Multi-Tier Docker & Nginx Portfolio Project",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "express": "^4.21.1",
+    "pg": "^8.13.1",
+    "redis": "^4.7.0"
+  }
+}
